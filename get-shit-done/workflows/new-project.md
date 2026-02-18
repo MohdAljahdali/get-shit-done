@@ -47,9 +47,10 @@ The document should describe what you want to build.
 
 ```bash
 INIT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init new-project)
+LANGUAGE_INSTRUCTION=$(echo "$INIT" | jq -r '.language_instruction // empty')
 ```
 
-Parse JSON for: `researcher_model`, `synthesizer_model`, `roadmapper_model`, `commit_docs`, `project_exists`, `has_codebase_map`, `planning_exists`, `has_existing_code`, `has_package_file`, `is_brownfield`, `needs_codebase_map`, `has_git`.
+Parse JSON for: `researcher_model`, `synthesizer_model`, `roadmapper_model`, `commit_docs`, `project_exists`, `has_codebase_map`, `planning_exists`, `has_existing_code`, `has_package_file`, `is_brownfield`, `needs_codebase_map`, `has_git`, `language_instruction`.
 
 **If `project_exists` is true:** Error — project already initialized. Use `/gsd:progress`.
 
@@ -582,7 +583,7 @@ Your STACK.md feeds into roadmap creation. Be prescriptive:
 Write to: .planning/research/STACK.md
 Use template: ~/.claude/get-shit-done/templates/research-project/STACK.md
 </output>
-", subagent_type="general-purpose", model="{researcher_model}", description="Stack research")
+" + (language_instruction ? "\n\n" + language_instruction : ""), subagent_type="general-purpose", model="{researcher_model}", description="Stack research")
 
 Task(prompt="First, read ~/.claude/agents/gsd-project-researcher.md for your role and instructions.
 
@@ -622,7 +623,7 @@ Your FEATURES.md feeds into requirements definition. Categorize clearly:
 Write to: .planning/research/FEATURES.md
 Use template: ~/.claude/get-shit-done/templates/research-project/FEATURES.md
 </output>
-", subagent_type="general-purpose", model="{researcher_model}", description="Features research")
+" + (language_instruction ? "\n\n" + language_instruction : ""), subagent_type="general-purpose", model="{researcher_model}", description="Features research")
 
 Task(prompt="First, read ~/.claude/agents/gsd-project-researcher.md for your role and instructions.
 
@@ -662,7 +663,7 @@ Your ARCHITECTURE.md informs phase structure in roadmap. Include:
 Write to: .planning/research/ARCHITECTURE.md
 Use template: ~/.claude/get-shit-done/templates/research-project/ARCHITECTURE.md
 </output>
-", subagent_type="general-purpose", model="{researcher_model}", description="Architecture research")
+" + (language_instruction ? "\n\n" + language_instruction : ""), subagent_type="general-purpose", model="{researcher_model}", description="Architecture research")
 
 Task(prompt="First, read ~/.claude/agents/gsd-project-researcher.md for your role and instructions.
 
@@ -702,7 +703,7 @@ Your PITFALLS.md prevents mistakes in roadmap/planning. For each pitfall:
 Write to: .planning/research/PITFALLS.md
 Use template: ~/.claude/get-shit-done/templates/research-project/PITFALLS.md
 </output>
-", subagent_type="general-purpose", model="{researcher_model}", description="Pitfalls research")
+" + (language_instruction ? "\n\n" + language_instruction : ""), subagent_type="general-purpose", model="{researcher_model}", description="Pitfalls research")
 ```
 
 After all 4 agents complete, spawn synthesizer to create SUMMARY.md:
@@ -726,7 +727,7 @@ Write to: .planning/research/SUMMARY.md
 Use template: ~/.claude/get-shit-done/templates/research-project/SUMMARY.md
 Commit after writing.
 </output>
-", subagent_type="gsd-research-synthesizer", model="{synthesizer_model}", description="Synthesize research")
+" + (language_instruction ? "\n\n" + language_instruction : ""), subagent_type="gsd-research-synthesizer", model="{synthesizer_model}", description="Synthesize research")
 ```
 
 Display research complete banner and key findings:
@@ -933,7 +934,7 @@ Create roadmap:
 
 Write files first, then return. This ensures artifacts persist even if context is lost.
 </instructions>
-", subagent_type="gsd-roadmapper", model="{roadmapper_model}", description="Create roadmap")
+" + (language_instruction ? "\n\n" + language_instruction : ""), subagent_type="gsd-roadmapper", model="{roadmapper_model}", description="Create roadmap")
 ```
 
 **Handle roadmapper return:**

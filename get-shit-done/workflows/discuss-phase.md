@@ -112,9 +112,10 @@ Phase number from argument (required).
 
 ```bash
 INIT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init phase-op "${PHASE}")
+LANGUAGE_INSTRUCTION=$(echo "$INIT" | jq -r '.language_instruction // empty')
 ```
 
-Parse JSON for: `commit_docs`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `padded_phase`, `has_research`, `has_context`, `has_plans`, `has_verification`, `plan_count`, `roadmap_exists`, `planning_exists`.
+Parse JSON for: `commit_docs`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `padded_phase`, `has_research`, `has_context`, `has_plans`, `has_verification`, `plan_count`, `roadmap_exists`, `planning_exists`, `language_instruction`.
 
 **If `phase_found` is false:**
 ```
@@ -455,7 +456,7 @@ Context captured. Spawning plan-phase...
 Spawn plan-phase as Task:
 ```
 Task(
-  prompt="Run /gsd:plan-phase ${PHASE} --auto",
+  prompt="Run /gsd:plan-phase ${PHASE} --auto" + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="general-purpose",
   description="Plan Phase ${PHASE}"
 )

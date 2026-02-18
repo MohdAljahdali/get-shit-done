@@ -175,6 +175,7 @@ function loadConfig(cwd) {
     verifier: true,
     parallelization: true,
     brave_search: false,
+    language: 'auto',
   };
 
   try {
@@ -208,10 +209,33 @@ function loadConfig(cwd) {
       verifier: get('verifier', { section: 'workflow', field: 'verifier' }) ?? defaults.verifier,
       parallelization,
       brave_search: get('brave_search') ?? defaults.brave_search,
+      language: get('language') ?? defaults.language,
     };
   } catch {
     return defaults;
   }
+}
+
+// ─── Language Support ─────────────────────────────────────────────────────────
+
+const LANGUAGE_NAMES = {
+  'auto': 'auto',
+  'en': 'English',
+  'ar': 'Arabic',
+  'fr': 'French',
+  'es': 'Spanish',
+  'de': 'German',
+  'zh': 'Chinese',
+  'ja': 'Japanese',
+  'pt': 'Portuguese',
+  'ru': 'Russian',
+  'it': 'Italian',
+};
+
+function getLanguageInstruction(language) {
+  if (!language || language === 'auto' || language === 'en') return null;
+  const name = LANGUAGE_NAMES[language] || language;
+  return `IMPORTANT: All your responses, explanations, and user-facing output must be written in ${name}. Use this language for ALL communication with the user.`;
 }
 
 function isGitIgnored(cwd, targetPath) {
@@ -4306,6 +4330,9 @@ function cmdInitExecutePhase(cwd, phase, includes, raw) {
     result.roadmap_content = safeReadFile(path.join(cwd, '.planning', 'ROADMAP.md'));
   }
 
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
+
   output(result, raw);
 }
 
@@ -4402,6 +4429,9 @@ function cmdInitPlanPhase(cwd, phase, includes, raw) {
     } catch {}
   }
 
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
+
   output(result, raw);
 }
 
@@ -4458,6 +4488,9 @@ function cmdInitNewProject(cwd, raw) {
     brave_search_available: hasBraveSearch,
   };
 
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
+
   output(result, raw);
 }
 
@@ -4484,6 +4517,9 @@ function cmdInitNewMilestone(cwd, raw) {
     roadmap_exists: pathExistsInternal(cwd, '.planning/ROADMAP.md'),
     state_exists: pathExistsInternal(cwd, '.planning/STATE.md'),
   };
+
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
 
   output(result, raw);
 }
@@ -4534,6 +4570,9 @@ function cmdInitQuick(cwd, description, raw) {
     planning_exists: pathExistsInternal(cwd, '.planning'),
   };
 
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
+
   output(result, raw);
 }
 
@@ -4560,6 +4599,9 @@ function cmdInitResume(cwd, raw) {
     // Config
     commit_docs: config.commit_docs,
   };
+
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
 
   output(result, raw);
 }
@@ -4589,6 +4631,9 @@ function cmdInitVerifyWork(cwd, phase, raw) {
     // Existing artifacts
     has_verification: phaseInfo?.has_verification || false,
   };
+
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
 
   output(result, raw);
 }
@@ -4642,6 +4687,9 @@ function cmdInitPhaseOp(cwd, phase, raw) {
     roadmap_exists: pathExistsInternal(cwd, '.planning/ROADMAP.md'),
     planning_exists: pathExistsInternal(cwd, '.planning'),
   };
+
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
 
   output(result, raw);
 }
@@ -4701,6 +4749,9 @@ function cmdInitTodos(cwd, area, raw) {
     todos_dir_exists: pathExistsInternal(cwd, '.planning/todos'),
     pending_dir_exists: pathExistsInternal(cwd, '.planning/todos/pending'),
   };
+
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
 
   output(result, raw);
 }
@@ -4763,6 +4814,9 @@ function cmdInitMilestoneOp(cwd, raw) {
     phases_dir_exists: pathExistsInternal(cwd, '.planning/phases'),
   };
 
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
+
   output(result, raw);
 }
 
@@ -4796,6 +4850,9 @@ function cmdInitMapCodebase(cwd, raw) {
     planning_exists: pathExistsInternal(cwd, '.planning'),
     codebase_dir_exists: pathExistsInternal(cwd, '.planning/codebase'),
   };
+
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
 
   output(result, raw);
 }
@@ -4903,6 +4960,9 @@ function cmdInitProgress(cwd, includes, raw) {
   if (includes.has('config')) {
     result.config_content = safeReadFile(path.join(cwd, '.planning', 'config.json'));
   }
+
+  result.language = config.language;
+  result.language_instruction = getLanguageInstruction(config.language);
 
   output(result, raw);
 }

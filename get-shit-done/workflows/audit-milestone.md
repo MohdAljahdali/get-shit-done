@@ -12,9 +12,10 @@ Read all files referenced by the invoking prompt's execution_context before star
 
 ```bash
 INIT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init milestone-op)
+LANGUAGE_INSTRUCTION=$(echo "$INIT" | jq -r '.language_instruction // empty')
 ```
 
-Extract from init JSON: `milestone_version`, `milestone_name`, `phase_count`, `completed_phases`, `commit_docs`.
+Extract from init JSON: `milestone_version`, `milestone_name`, `phase_count`, `completed_phases`, `commit_docs`, `language_instruction`.
 
 Resolve integration checker model:
 ```bash
@@ -72,7 +73,7 @@ Milestone Requirements:
 
 MUST map each integration finding to affected requirement IDs where applicable.
 
-Verify cross-phase wiring and E2E user flows.",
+Verify cross-phase wiring and E2E user flows." + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="gsd-integration-checker",
   model="{integration_checker_model}"
 )

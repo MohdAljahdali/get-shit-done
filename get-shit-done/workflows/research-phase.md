@@ -19,6 +19,7 @@ Resolve model for:
 
 ```bash
 PHASE_INFO=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs roadmap get-phase "${PHASE}")
+LANGUAGE_INSTRUCTION=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init phase-op "${PHASE}" | jq -r '.language_instruction // empty')
 ```
 
 If `found` is false: Error and exit.
@@ -59,7 +60,7 @@ Phase context: {context_md}
 
 <output>
 Write to: .planning/phases/${PHASE}-{slug}/${PHASE}-RESEARCH.md
-</output>",
+</output>" + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="gsd-phase-researcher",
   model="{researcher_model}"
 )

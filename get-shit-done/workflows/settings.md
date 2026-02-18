@@ -30,6 +30,7 @@ Parse current values (default to `true` if not present):
 - `workflow.verifier` — spawn verifier during execute-phase
 - `model_profile` — which model each agent uses (default: `balanced`)
 - `git.branching_strategy` — branching approach (default: `"none"`)
+- `language` — communication language for all agents (default: `"auto"`)
 </step>
 
 <step name="present_settings">
@@ -92,6 +93,17 @@ AskUserQuestion([
       { label: "Per Phase", description: "Create branch for each phase (gsd/phase-{N}-{name})" },
       { label: "Per Milestone", description: "Create branch for entire milestone (gsd/{version}-{name})" }
     ]
+  },
+  {
+    question: "What language should agents use when communicating with you?",
+    header: "Language",
+    multiSelect: false,
+    options: [
+      { label: "Auto (Recommended)", description: "Match the language you write in — no forced language" },
+      { label: "English", description: "All agent output in English" },
+      { label: "Arabic (العربية)", description: "All agent output in Arabic" },
+      { label: "French (Français)", description: "All agent output in French" }
+    ]
   }
 ])
 ```
@@ -112,8 +124,16 @@ Merge new settings into existing config.json:
   },
   "git": {
     "branching_strategy": "none" | "phase" | "milestone"
-  }
+  },
+  "language": "auto" | "en" | "ar" | "fr" | <user-typed value>
 }
+
+Map language answer to value:
+- "Auto (Recommended)" → `"auto"`
+- "English" → `"en"`
+- "Arabic (العربية)" → `"ar"`
+- "French (Français)" → `"fr"`
+- Other (user typed) → store as-is (e.g., `"Spanish"`, `"de"`)
 ```
 
 Write updated config to `.planning/config.json`.
@@ -151,6 +171,7 @@ Write `~/.gsd/defaults.json` with:
   "commit_docs": <current>,
   "parallelization": <current>,
   "branching_strategy": <current>,
+  "language": <current>,
   "workflow": {
     "research": <current>,
     "plan_check": <current>,
@@ -177,6 +198,7 @@ Display:
 | Execution Verifier   | {On/Off} |
 | Auto-Advance         | {On/Off} |
 | Git Branching        | {None/Per Phase/Per Milestone} |
+| Language             | {auto/en/ar/fr/...} |
 | Saved as Defaults    | {Yes/No} |
 
 These settings apply to future /gsd:plan-phase and /gsd:execute-phase runs.
@@ -193,8 +215,8 @@ Quick commands:
 
 <success_criteria>
 - [ ] Current config read
-- [ ] User presented with 6 settings (profile + 4 workflow toggles + git branching)
-- [ ] Config updated with model_profile, workflow, and git sections
+- [ ] User presented with 7 settings (profile + 4 workflow toggles + git branching + language)
+- [ ] Config updated with model_profile, workflow, git, and language fields
 - [ ] User offered to save as global defaults (~/.gsd/defaults.json)
 - [ ] Changes confirmed to user
 </success_criteria>

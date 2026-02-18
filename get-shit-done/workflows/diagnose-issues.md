@@ -79,13 +79,15 @@ For each gap, fill the debug-subagent-prompt template and spawn:
 
 ```
 Task(
-  prompt=filled_debug_subagent_prompt,
+  prompt=filled_debug_subagent_prompt + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="general-purpose",
   description="Debug: {truth_short}"
 )
 ```
 
 **All agents spawn in single message** (parallel execution).
+
+`language_instruction`: loaded from parent workflow's INIT JSON (`verify-work` passes it through context). If null/empty, omit.
 
 Template placeholders:
 - `{truth}`: The expected behavior that failed

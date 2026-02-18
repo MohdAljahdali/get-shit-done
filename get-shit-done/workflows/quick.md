@@ -44,9 +44,10 @@ If `$FULL_MODE`:
 
 ```bash
 INIT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init quick "$DESCRIPTION")
+LANGUAGE_INSTRUCTION=$(echo "$INIT" | jq -r '.language_instruction // empty')
 ```
 
-Parse JSON for: `planner_model`, `executor_model`, `checker_model`, `verifier_model`, `commit_docs`, `next_num`, `slug`, `date`, `timestamp`, `quick_dir`, `task_dir`, `roadmap_exists`, `planning_exists`.
+Parse JSON for: `planner_model`, `executor_model`, `checker_model`, `verifier_model`, `commit_docs`, `next_num`, `slug`, `date`, `timestamp`, `quick_dir`, `task_dir`, `roadmap_exists`, `planning_exists`, `language_instruction`.
 
 **If `roadmap_exists` is false:** Error — Quick mode requires an active project with ROADMAP.md. Run `/gsd:new-project` first.
 
@@ -114,7 +115,7 @@ ${FULL_MODE ? '- Each task MUST have `files`, `action`, `verify`, `done` fields'
 Write plan to: ${QUICK_DIR}/${next_num}-PLAN.md
 Return: ## PLANNING COMPLETE with plan path
 </output>
-",
+" + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="gsd-planner",
   model="{planner_model}",
   description="Quick plan: ${DESCRIPTION}"
@@ -177,7 +178,7 @@ Skip: context compliance (no CONTEXT.md), cross-plan deps (single plan), ROADMAP
 
 ```
 Task(
-  prompt=checker_prompt,
+  prompt=checker_prompt + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="gsd-plan-checker",
   model="{checker_model}",
   description="Check quick plan: ${DESCRIPTION}"
@@ -221,7 +222,7 @@ Return what changed.
 
 ```
 Task(
-  prompt="First, read ~/.claude/agents/gsd-planner.md for your role and instructions.\n\n" + revision_prompt,
+  prompt="First, read ~/.claude/agents/gsd-planner.md for your role and instructions.\n\n" + revision_prompt + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="general-purpose",
   model="{planner_model}",
   description="Revise quick plan: ${DESCRIPTION}"
@@ -256,7 +257,7 @@ Project state: @.planning/STATE.md
 - Create summary at: ${QUICK_DIR}/${next_num}-SUMMARY.md
 - Do NOT update ROADMAP.md (quick tasks are separate from planned phases)
 </constraints>
-",
+" + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="gsd-executor",
   model="{executor_model}",
   description="Execute: ${DESCRIPTION}"
@@ -295,7 +296,7 @@ Task(
 Task directory: ${QUICK_DIR}
 Task goal: ${DESCRIPTION}
 Plan: @${QUICK_DIR}/${next_num}-PLAN.md
-Check must_haves against actual codebase. Create VERIFICATION.md at ${QUICK_DIR}/${next_num}-VERIFICATION.md.",
+Check must_haves against actual codebase. Create VERIFICATION.md at ${QUICK_DIR}/${next_num}-VERIFICATION.md." + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="gsd-verifier",
   model="{verifier_model}",
   description="Verify: ${DESCRIPTION}"

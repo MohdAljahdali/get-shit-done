@@ -25,9 +25,10 @@ If $ARGUMENTS contains a phase number, load context:
 
 ```bash
 INIT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init verify-work "${PHASE_ARG}")
+LANGUAGE_INSTRUCTION=$(echo "$INIT" | jq -r '.language_instruction // empty')
 ```
 
-Parse JSON for: `planner_model`, `checker_model`, `commit_docs`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `has_verification`.
+Parse JSON for: `planner_model`, `checker_model`, `commit_docs`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `has_verification`, `language_instruction`.
 </step>
 
 <step name="check_active_session">
@@ -380,7 +381,7 @@ Task(
 Output consumed by /gsd:execute-phase
 Plans must be executable prompts.
 </downstream_consumer>
-""",
+""" + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="gsd-planner",
   model="{planner_model}",
   description="Plan gap fixes for Phase {phase}"
@@ -426,7 +427,7 @@ Return one of:
 - ## VERIFICATION PASSED — all checks pass
 - ## ISSUES FOUND — structured issue list
 </expected_output>
-""",
+""" + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="gsd-plan-checker",
   model="{checker_model}",
   description="Verify Phase {phase} fix plans"
@@ -467,7 +468,7 @@ Task(
 Read existing PLAN.md files. Make targeted updates to address checker issues.
 Do NOT replan from scratch unless issues are fundamental.
 </instructions>
-""",
+""" + (language_instruction ? "\n\n" + language_instruction : ""),
   subagent_type="gsd-planner",
   model="{planner_model}",
   description="Revise Phase {phase} plans"

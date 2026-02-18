@@ -27,9 +27,10 @@ Load codebase mapping context:
 
 ```bash
 INIT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init map-codebase)
+LANGUAGE_INSTRUCTION=$(echo "$INIT" | jq -r '.language_instruction // empty')
 ```
 
-Extract from init JSON: `mapper_model`, `commit_docs`, `codebase_dir`, `existing_maps`, `has_maps`, `codebase_dir_exists`.
+Extract from init JSON: `mapper_model`, `commit_docs`, `codebase_dir`, `existing_maps`, `has_maps`, `codebase_dir_exists`, `language_instruction`.
 </step>
 
 <step name="check_existing">
@@ -86,6 +87,8 @@ Spawn 4 parallel gsd-codebase-mapper agents.
 
 Use Task tool with `subagent_type="gsd-codebase-mapper"`, `model="{mapper_model}"`, and `run_in_background=true` for parallel execution.
 
+**Note:** `{language_instruction}` in each prompt is replaced with the value of `language_instruction` from init JSON. Omit this line entirely if the value is null or empty.
+
 **CRITICAL:** Use the dedicated `gsd-codebase-mapper` agent, NOT `Explore`. The mapper agent writes documents directly.
 
 **Agent 1: Tech Focus**
@@ -109,6 +112,7 @@ Write these documents to .planning/codebase/:
 - INTEGRATIONS.md - External APIs, databases, auth providers, webhooks
 
 Explore thoroughly. Write documents directly using templates. Return confirmation only.
+{language_instruction}
 ```
 
 **Agent 2: Architecture Focus**
@@ -132,6 +136,7 @@ Write these documents to .planning/codebase/:
 - STRUCTURE.md - Directory layout, key locations, naming conventions
 
 Explore thoroughly. Write documents directly using templates. Return confirmation only.
+{language_instruction}
 ```
 
 **Agent 3: Quality Focus**
@@ -155,6 +160,7 @@ Write these documents to .planning/codebase/:
 - TESTING.md - Framework, structure, mocking, coverage
 
 Explore thoroughly. Write documents directly using templates. Return confirmation only.
+{language_instruction}
 ```
 
 **Agent 4: Concerns Focus**
@@ -177,6 +183,7 @@ Write this document to .planning/codebase/:
 - CONCERNS.md - Tech debt, bugs, security, performance, fragile areas
 
 Explore thoroughly. Write document directly using template. Return confirmation only.
+{language_instruction}
 ```
 
 Continue to collect_confirmations.
