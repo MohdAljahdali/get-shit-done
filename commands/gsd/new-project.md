@@ -8,6 +8,13 @@ allowed-tools:
   - Write
   - Task
   - AskUserQuestion
+  - TeamCreate
+  - TeamDelete
+  - TaskCreate
+  - TaskGet
+  - TaskUpdate
+  - TaskList
+  - SendMessage
 ---
 <context>
 **Flags:**

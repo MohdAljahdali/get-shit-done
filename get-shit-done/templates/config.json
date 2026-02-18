@@ -4,6 +4,7 @@
   "language": "auto",
   "workflow": {
     "research": true,
+    "team_research": false,
     "plan_check": true,
     "verifier": true,
     "auto_advance": false

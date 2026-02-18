@@ -50,7 +50,7 @@ INIT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init new-project)
 LANGUAGE_INSTRUCTION=$(echo "$INIT" | jq -r '.language_instruction // empty')
 ```
 
-Parse JSON for: `researcher_model`, `synthesizer_model`, `roadmapper_model`, `commit_docs`, `project_exists`, `has_codebase_map`, `planning_exists`, `has_existing_code`, `has_package_file`, `is_brownfield`, `needs_codebase_map`, `has_git`, `language_instruction`.
+Parse JSON for: `researcher_model`, `synthesizer_model`, `roadmapper_model`, `commit_docs`, `project_exists`, `has_codebase_map`, `planning_exists`, `has_existing_code`, `has_package_file`, `is_brownfield`, `needs_codebase_map`, `has_git`, `team_research`, `language_instruction`.
 
 **If `project_exists` is true:** Error — project already initialized. Use `/gsd:progress`.
 
@@ -533,6 +533,8 @@ Check if this is greenfield or subsequent milestone:
 - If no "Validated" requirements in PROJECT.md → Greenfield (building from scratch)
 - If "Validated" requirements exist → Subsequent milestone (adding to existing app)
 
+**If `team_research` is false (default):**
+
 Display spawning indicator:
 ```
 ◆ Spawning 4 researchers in parallel...
@@ -728,6 +730,121 @@ Use template: ~/.claude/get-shit-done/templates/research-project/SUMMARY.md
 Commit after writing.
 </output>
 " + (language_instruction ? "\n\n" + language_instruction : ""), subagent_type="gsd-research-synthesizer", model="{synthesizer_model}", description="Synthesize research")
+```
+
+**If `team_research` is true:**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD ► TEAM RESEARCH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+◆ Creating research team...
+  → Stack researcher
+  → Features researcher
+  → Architecture researcher
+  → Pitfalls researcher
+```
+
+**Step A: Create team and tasks**
+
+Derive `{project_slug}` from project name (lowercase, hyphens). Derive `{domain}` from project description.
+
+```
+TeamCreate(
+  team_name="gsd-research-{project_slug}",
+  description="Research for {project_name}",
+  agent_type="research-lead"
+)
+```
+
+Create 4 tasks and store the returned IDs:
+```
+TASK_STACK  = TaskCreate(subject="Stack research",        description="Research the standard 2025 stack for {domain}. Write to .planning/research/STACK.md.",        activeForm="Researching stack")
+TASK_FEAT   = TaskCreate(subject="Features research",     description="Research features for {domain} products. Write to .planning/research/FEATURES.md.",          activeForm="Researching features")
+TASK_ARCH   = TaskCreate(subject="Architecture research", description="Research architecture patterns for {domain}. Write to .planning/research/ARCHITECTURE.md.",   activeForm="Researching architecture")
+TASK_PFALL  = TaskCreate(subject="Pitfalls research",     description="Research common mistakes building {domain} apps. Write to .planning/research/PITFALLS.md.",   activeForm="Researching pitfalls")
+```
+
+**Step B: Spawn 4 researcher teammates in parallel (single message)**
+
+For each dimension, use the same base content as the standard Task() prompt for that dimension
+(same `<research_type>`, `<milestone_context>`, `<question>`, `<project_context>`,
+`<downstream_consumer>`, `<quality_gate>`, `<output>` blocks) and add a `<team_collaboration>` section:
+
+```
+Task(
+  subagent_type="gsd-project-researcher",
+  model="{researcher_model}",
+  team_name="gsd-research-{project_slug}",
+  name="stack-researcher",
+  description="Stack research",
+  prompt="First, read ~/.claude/agents/gsd-project-researcher.md for your role and instructions.
+
+<role>
+You are the Stack researcher in a team researching {project_name}.
+Your teammates: features-researcher, architecture-researcher, pitfalls-researcher.
+</role>
+
+[... same research_type / milestone_context / question / project_context / downstream_consumer / quality_gate / output content as the standard Stack Task() prompt ...]
+
+<team_collaboration>
+After writing your research file:
+1. Read your teammates' files if they exist (.planning/research/FEATURES.md, ARCHITECTURE.md, PITFALLS.md)
+2. If you find a cross-dimension conflict or important dependency, SendMessage to the relevant teammate
+3. Update your own file if their findings change your recommendations
+4. Mark your task completed: TaskUpdate(taskId='{TASK_STACK_ID}', status='completed')
+5. SendMessage to the team lead: 'RESEARCH COMPLETE: stack done. File: .planning/research/STACK.md'
+</team_collaboration>
+" + (language_instruction ? "\n\n" + language_instruction : "")
+)
+```
+
+Spawn all 4 in the same message (parallel). Pass the correct `{TASK_*_ID}` from Step A to each.
+
+**Step C: Wait for all 4 "RESEARCH COMPLETE" messages**
+
+Monitor via automatic message delivery. When all 4 researchers send their completion message, proceed.
+
+**Step D: Shut down researcher teammates**
+
+```
+SendMessage(type="shutdown_request", recipient="stack-researcher",        content="Research complete. Thank you.")
+SendMessage(type="shutdown_request", recipient="features-researcher",     content="Research complete. Thank you.")
+SendMessage(type="shutdown_request", recipient="architecture-researcher", content="Research complete. Thank you.")
+SendMessage(type="shutdown_request", recipient="pitfalls-researcher",     content="Research complete. Thank you.")
+```
+
+Wait for shutdown confirmations.
+
+**Step E: Run synthesizer as subagent (same as standard path)**
+
+```
+Task(prompt="
+<task>
+Synthesize research outputs into SUMMARY.md.
+</task>
+
+<research_files>
+Read these files:
+- .planning/research/STACK.md
+- .planning/research/FEATURES.md
+- .planning/research/ARCHITECTURE.md
+- .planning/research/PITFALLS.md
+</research_files>
+
+<output>
+Write to: .planning/research/SUMMARY.md
+Use template: ~/.claude/get-shit-done/templates/research-project/SUMMARY.md
+Commit after writing.
+</output>
+" + (language_instruction ? "\n\n" + language_instruction : ""), subagent_type="gsd-research-synthesizer", model="{synthesizer_model}", description="Synthesize research")
+```
+
+**Step F: Clean up team**
+
+```
+TeamDelete()
 ```
 
 Display research complete banner and key findings:

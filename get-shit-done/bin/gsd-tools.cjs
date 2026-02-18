@@ -171,6 +171,7 @@ function loadConfig(cwd) {
     phase_branch_template: 'gsd/phase-{phase}-{slug}',
     milestone_branch_template: 'gsd/{milestone}-{slug}',
     research: true,
+    team_research: false,
     plan_checker: true,
     verifier: true,
     parallelization: true,
@@ -205,6 +206,7 @@ function loadConfig(cwd) {
       phase_branch_template: get('phase_branch_template', { section: 'git', field: 'phase_branch_template' }) ?? defaults.phase_branch_template,
       milestone_branch_template: get('milestone_branch_template', { section: 'git', field: 'milestone_branch_template' }) ?? defaults.milestone_branch_template,
       research: get('research', { section: 'workflow', field: 'research' }) ?? defaults.research,
+      team_research: get('team_research', { section: 'workflow', field: 'team_research' }) ?? defaults.team_research,
       plan_checker: get('plan_checker', { section: 'workflow', field: 'plan_check' }) ?? defaults.plan_checker,
       verifier: get('verifier', { section: 'workflow', field: 'verifier' }) ?? defaults.verifier,
       parallelization,
@@ -4488,6 +4490,7 @@ function cmdInitNewProject(cwd, raw) {
     brave_search_available: hasBraveSearch,
   };
 
+  result.team_research = config.team_research;
   result.language = config.language;
   result.language_instruction = getLanguageInstruction(config.language);
 
@@ -4507,6 +4510,7 @@ function cmdInitNewMilestone(cwd, raw) {
     // Config
     commit_docs: config.commit_docs,
     research_enabled: config.research,
+    team_research: config.team_research,
 
     // Current milestone
     current_milestone: milestone.version,

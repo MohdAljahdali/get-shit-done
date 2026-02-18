@@ -81,7 +81,7 @@ INIT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs init new-milestone)
 LANGUAGE_INSTRUCTION=$(echo "$INIT" | jq -r '.language_instruction // empty')
 ```
 
-Extract from init JSON: `researcher_model`, `synthesizer_model`, `roadmapper_model`, `commit_docs`, `research_enabled`, `current_milestone`, `project_exists`, `roadmap_exists`, `language_instruction`.
+Extract from init JSON: `researcher_model`, `synthesizer_model`, `roadmapper_model`, `commit_docs`, `research_enabled`, `team_research`, `current_milestone`, `project_exists`, `roadmap_exists`, `language_instruction`.
 
 ## 8. Research Decision
 
@@ -100,6 +100,8 @@ node ~/.claude/get-shit-done/bin/gsd-tools.cjs config-set workflow.research fals
 ```
 
 **If "Research first":**
+
+**If `team_research` is false (default):**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -164,6 +166,124 @@ Write to: .planning/research/SUMMARY.md
 Use template: ~/.claude/get-shit-done/templates/research-project/SUMMARY.md
 Commit after writing.
 " + (language_instruction ? "\n\n" + language_instruction : ""), subagent_type="gsd-research-synthesizer", model="{synthesizer_model}", description="Synthesize research")
+```
+
+**If `team_research` is true:**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD ► TEAM RESEARCH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+◆ Creating research team...
+  → Stack researcher
+  → Features researcher
+  → Architecture researcher
+  → Pitfalls researcher
+```
+
+```bash
+mkdir -p .planning/research
+```
+
+**Step A: Create team and tasks**
+
+Use `current_milestone` as team name slug:
+
+```
+TeamCreate(
+  team_name="gsd-research-{current_milestone}",
+  description="Research for milestone {current_milestone}",
+  agent_type="research-lead"
+)
+```
+
+Create 4 tasks and store the returned IDs:
+```
+TASK_STACK  = TaskCreate(subject="Stack research",        description="Research stack additions needed for [new features]. Write to .planning/research/STACK.md.",        activeForm="Researching stack")
+TASK_FEAT   = TaskCreate(subject="Features research",     description="Research how [target features] typically work. Write to .planning/research/FEATURES.md.",          activeForm="Researching features")
+TASK_ARCH   = TaskCreate(subject="Architecture research", description="Research how [target features] integrate with existing architecture. Write to .planning/research/ARCHITECTURE.md.", activeForm="Researching architecture")
+TASK_PFALL  = TaskCreate(subject="Pitfalls research",     description="Research common mistakes when adding [target features]. Write to .planning/research/PITFALLS.md.",  activeForm="Researching pitfalls")
+```
+
+**Step B: Spawn 4 researcher teammates in parallel (single message)**
+
+For each dimension, use the same base content as the standard template (same dimension-specific
+EXISTING_CONTEXT, QUESTION, CONSUMER, GATES, FILE from the table above) plus a `<team_collaboration>` section:
+
+```
+Task(
+  subagent_type="gsd-project-researcher",
+  model="{researcher_model}",
+  team_name="gsd-research-{current_milestone}",
+  name="{stack|features|architecture|pitfalls}-researcher",
+  description="{DIMENSION} research",
+  prompt="
+<research_type>Project Research — {DIMENSION} for [new features].</research_type>
+
+<milestone_context>
+SUBSEQUENT MILESTONE — Adding [target features] to existing app.
+{EXISTING_CONTEXT}
+Focus ONLY on what's needed for the NEW features.
+</milestone_context>
+
+<question>{QUESTION}</question>
+<project_context>[PROJECT.md summary]</project_context>
+<downstream_consumer>{CONSUMER}</downstream_consumer>
+<quality_gate>{GATES}</quality_gate>
+
+<output>
+Write to: .planning/research/{FILE}
+Use template: ~/.claude/get-shit-done/templates/research-project/{FILE}
+</output>
+
+<team_collaboration>
+After writing your research file:
+1. Read your teammates' files if they exist (.planning/research/STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md)
+2. If you find a cross-dimension conflict or important dependency, SendMessage to the relevant teammate
+3. Update your own file if their findings change your recommendations
+4. Mark your task completed: TaskUpdate(taskId='{TASK_*_ID}', status='completed')
+5. SendMessage to the team lead: 'RESEARCH COMPLETE: {dimension} done. File: .planning/research/{FILE}'
+</team_collaboration>
+" + (language_instruction ? "\n\n" + language_instruction : "")
+)
+```
+
+Pass the correct `{TASK_*_ID}` from Step A to each researcher.
+
+**Step C: Wait for all 4 "RESEARCH COMPLETE" messages**
+
+Monitor via automatic message delivery. When all 4 researchers report completion, proceed.
+
+**Step D: Shut down researcher teammates**
+
+```
+SendMessage(type="shutdown_request", recipient="stack-researcher",        content="Research complete. Thank you.")
+SendMessage(type="shutdown_request", recipient="features-researcher",     content="Research complete. Thank you.")
+SendMessage(type="shutdown_request", recipient="architecture-researcher", content="Research complete. Thank you.")
+SendMessage(type="shutdown_request", recipient="pitfalls-researcher",     content="Research complete. Thank you.")
+```
+
+Wait for shutdown confirmations.
+
+**Step E: Run synthesizer as subagent (same as standard path)**
+
+```
+Task(prompt="
+Synthesize research outputs into SUMMARY.md.
+
+Read: .planning/research/STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md
+
+Write to: .planning/research/SUMMARY.md
+Use template: ~/.claude/get-shit-done/templates/research-project/SUMMARY.md
+Commit after writing.
+" + (language_instruction ? "\n\n" + language_instruction : ""), subagent_type="gsd-research-synthesizer", model="{synthesizer_model}", description="Synthesize research")
+```
+
+**Step F: Clean up team**
+
+```
+TeamDelete()
 ```
 
 Display key findings from SUMMARY.md:

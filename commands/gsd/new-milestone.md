@@ -8,6 +8,13 @@ allowed-tools:
   - Bash
   - Task
   - AskUserQuestion
+  - TeamCreate
+  - TeamDelete
+  - TaskCreate
+  - TaskGet
+  - TaskUpdate
+  - TaskList
+  - SendMessage
 ---
 <objective>
 Start a new milestone: questioning → research (optional) → requirements → roadmap.

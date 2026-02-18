@@ -31,6 +31,7 @@ Parse current values (default to `true` if not present):
 - `model_profile` — which model each agent uses (default: `balanced`)
 - `git.branching_strategy` — branching approach (default: `"none"`)
 - `language` — communication language for all agents (default: `"auto"`)
+- `workflow.team_research` — use agent teams for parallel research (default: `false`)
 </step>
 
 <step name="present_settings">
@@ -104,6 +105,15 @@ AskUserQuestion([
       { label: "Arabic (العربية)", description: "All agent output in Arabic" },
       { label: "French (Français)", description: "All agent output in French" }
     ]
+  },
+  {
+    question: "Use agent teams for parallel research? (experimental — requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)",
+    header: "Team Research",
+    multiSelect: false,
+    options: [
+      { label: "Off (Recommended)", description: "Standard parallel subagents — faster, lower token cost" },
+      { label: "On", description: "Researcher teammates communicate with each other — richer findings, higher cost" }
+    ]
   }
 ])
 ```
@@ -120,13 +130,23 @@ Merge new settings into existing config.json:
     "research": true/false,
     "plan_check": true/false,
     "verifier": true/false,
-    "auto_advance": true/false
+    "auto_advance": true/false,
+    "team_research": true/false
   },
   "git": {
     "branching_strategy": "none" | "phase" | "milestone"
   },
   "language": "auto" | "en" | "ar" | "fr" | <user-typed value>
 }
+
+Map team_research answer to value:
+- "Off (Recommended)" or "Off" → `false`
+- "On" → `true`
+
+Write to config:
+```bash
+node ~/.claude/get-shit-done/bin/gsd-tools.cjs config-set workflow.team_research {true|false}
+```
 
 Map language answer to value:
 - "Auto (Recommended)" → `"auto"`
@@ -176,7 +196,8 @@ Write `~/.gsd/defaults.json` with:
     "research": <current>,
     "plan_check": <current>,
     "verifier": <current>,
-    "auto_advance": <current>
+    "auto_advance": <current>,
+    "team_research": <current>
   }
 }
 ```
@@ -199,6 +220,7 @@ Display:
 | Auto-Advance         | {On/Off} |
 | Git Branching        | {None/Per Phase/Per Milestone} |
 | Language             | {auto/en/ar/fr/...} |
+| Team Research        | {On/Off} |
 | Saved as Defaults    | {Yes/No} |
 
 These settings apply to future /gsd:plan-phase and /gsd:execute-phase runs.
@@ -215,8 +237,8 @@ Quick commands:
 
 <success_criteria>
 - [ ] Current config read
-- [ ] User presented with 7 settings (profile + 4 workflow toggles + git branching + language)
-- [ ] Config updated with model_profile, workflow, git, and language fields
+- [ ] User presented with 8 settings (profile + 4 workflow toggles + git branching + language + team research)
+- [ ] Config updated with model_profile, workflow, git, language, and team_research fields
 - [ ] User offered to save as global defaults (~/.gsd/defaults.json)
 - [ ] Changes confirmed to user
 </success_criteria>
