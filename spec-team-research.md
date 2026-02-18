@@ -374,6 +374,79 @@ Also:
 
 ---
 
+### 6. `commands/gsd/new-project.md`
+
+**Add team tools to `allowed-tools`.** The workflow now conditionally calls `TeamCreate`,
+`TeamDelete`, `TaskCreate`, `TaskUpdate`, `TaskList`, and `SendMessage` when `team_research` is true.
+
+Change the `allowed-tools` frontmatter from:
+
+```yaml
+allowed-tools:
+  - Read
+  - Bash
+  - Write
+  - Task
+  - AskUserQuestion
+```
+
+To:
+
+```yaml
+allowed-tools:
+  - Read
+  - Bash
+  - Write
+  - Task
+  - AskUserQuestion
+  - TeamCreate
+  - TeamDelete
+  - TaskCreate
+  - TaskGet
+  - TaskUpdate
+  - TaskList
+  - SendMessage
+```
+
+No other changes needed in this file.
+
+---
+
+### 7. `commands/gsd/new-milestone.md`
+
+**Same `allowed-tools` update as `new-project.md`.** Change from:
+
+```yaml
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - Task
+  - AskUserQuestion
+```
+
+To:
+
+```yaml
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - Task
+  - AskUserQuestion
+  - TeamCreate
+  - TeamDelete
+  - TaskCreate
+  - TaskGet
+  - TaskUpdate
+  - TaskList
+  - SendMessage
+```
+
+No other changes needed in this file.
+
+---
+
 ## Files That Do NOT Need Changes
 
 | File | Reason |
@@ -382,8 +455,8 @@ Also:
 | `agents/gsd-research-synthesizer.md` | Runs as subagent, unchanged |
 | `get-shit-done/workflows/research-phase.md` | Single-phase researcher, teams not needed |
 | Any other workflow file | Team research is only for project/milestone initialization |
-| `commands/gsd/new-project.md` | Routes to workflow, no changes needed |
-| `commands/gsd/new-milestone.md` | Routes to workflow, no changes needed |
+| `commands/gsd/execute-phase.md` | Uses subagents only — team variant is a separate command (`team-execute-phase`) |
+| `commands/gsd/plan-phase.md` | Uses subagents only — no team-plan-phase command yet |
 
 ---
 
