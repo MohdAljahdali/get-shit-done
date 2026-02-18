@@ -464,6 +464,30 @@ You're never locked in. The system adapts.
 | `/gsd:complete-milestone` | Archive milestone, tag release |
 | `/gsd:new-milestone [name]` | Start next version: questions → research → requirements → roadmap |
 
+### Agent Teams (Experimental)
+
+Coordinate multiple persistent Claude Code sessions working together. Unlike subagents (which fire-and-forget), teammates have their own context windows, share a task list, and communicate directly with each other.
+
+> [!NOTE]
+> Requires enabling in `~/.claude/settings.json`:
+> ```json
+> { "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" } }
+> ```
+
+| Command | What it does |
+|---------|--------------|
+| `/gsd:team-execute-phase <N>` | Execute a phase using persistent executor teammates coordinating via shared task list |
+
+**When to use teams vs subagents:**
+
+| | `/gsd:execute-phase` | `/gsd:team-execute-phase` |
+|-|---------------------|--------------------------|
+| Executors | Fire-and-forget subagents | Persistent teammates |
+| Coordination | Lead manages wave sequence | Task list + self-claiming |
+| Checkpoints | Fresh subagent spawned | Direct message to existing executor |
+| Token cost | Lower | Higher |
+| Best for | 1-3 plans, simple phases | 4+ plans, multi-wave phases |
+
 ### Navigation
 
 | Command | What it does |
